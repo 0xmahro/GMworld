@@ -1,0 +1,10 @@
+{
+  "name": "gmworld-contracts",
+  "version": "1.0.0",
+  "description": "GMWorld smart contract",
+  "scripts": {
+    "compile": "forge build"
+  },
+  "keywords": ["solidity", "base", "gm"],
+  "license": "MIT"
+}
