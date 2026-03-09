@@ -1,3 +1,5 @@
+'use client';
+
 import { useState } from 'react';
 import { WalletButton } from '@/components/WalletButton';
 import { LanguageSelector } from '@/components/LanguageSelector';
