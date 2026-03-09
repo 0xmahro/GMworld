@@ -75,7 +75,7 @@ function assignOffsets<T extends { coords: [number, number] }>(markers: T[]) {
   }
   const LABEL_HEIGHT = 14;
   const result: (T & { dy: number })[] = [];
-  for (const list of byRegion.values()) {
+  for (const list of Array.from(byRegion.values())) {
     list.forEach((m, i) => {
       result.push({ ...m, dy: -5 + i * LABEL_HEIGHT });
     });
@@ -111,7 +111,7 @@ export function WorldMap() {
       >
         <ZoomableGroup center={[0, 20]}>
           <Geographies geography={GEO_URL}>
-            {({ geographies }) =>
+            {({ geographies }: { geographies: { rsmKey: string; id?: string; properties?: { ISO_A3?: string } }[] }) =>
               geographies.map((geo) => {
                 const id = (geo.id ?? geo.properties?.ISO_A3 ?? '') as string;
                 const count = countryCounts[id] ?? 0;
