@@ -1,7 +1,7 @@
 'use client';
 
 import { useWriteContract, useWaitForTransactionReceipt } from 'wagmi';
-import { GMWORLD_ABI, GMWORLD_ADDRESS } from '@/lib/contracts';
+import { GMWORLD_ABI, GMWORLD_ADDRESS, GMWORLD_FEE_WEI } from '@/lib/contracts';
 
 export type TxStatus = 'idle' | 'pending' | 'success' | 'failed';
 
@@ -29,6 +29,7 @@ export function useGMWorld() {
       abi: GMWORLD_ABI,
       functionName: 'sendMessage',
       args: [message],
+      value: GMWORLD_FEE_WEI,
     });
   };
 
