@@ -1,6 +1,13 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   reactStrictMode: true,
+  async rewrites() {
+    return [
+      { source: '/.well-known/farcaster.json', destination: '/api/farcaster-manifest' },
+      { source: '/og-image.png', destination: '/og-image' },
+      { source: '/og-icon.png', destination: '/og-icon' },
+    ];
+  },
   webpack: (config) => {
     config.resolve.fallback = {
       ...config.resolve.fallback,
