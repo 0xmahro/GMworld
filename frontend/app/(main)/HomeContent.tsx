@@ -9,7 +9,7 @@ import { MessageFeed } from '@/components/MessageFeed';
 import { WorldMap } from '@/components/WorldMap';
 import { LANGUAGES, type Language } from '@/lib/languages';
 
-export default function Home() {
+export default function HomeContent() {
   const [language, setLanguage] = useState<Language>(LANGUAGES[0]);
 
   return (
