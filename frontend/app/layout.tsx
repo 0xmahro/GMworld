@@ -1,10 +1,12 @@
 import type { Metadata } from 'next';
-import { headers } from 'next/headers';
+import { cookies } from 'next/headers';
 import { Outfit, JetBrains_Mono } from 'next/font/google';
 import { cookieToInitialState } from 'wagmi';
 import { config } from '@/lib/wagmi';
 import { Providers } from './providers';
 import '@/styles/globals.css';
+
+export const dynamic = 'force-dynamic';
 
 const outfit = Outfit({ subsets: ['latin'], variable: '--font-outfit' });
 const jetbrains = JetBrains_Mono({ subsets: ['latin'], variable: '--font-mono' });
@@ -12,6 +14,12 @@ const jetbrains = JetBrains_Mono({ subsets: ['latin'], variable: '--font-mono' }
 export const metadata: Metadata = {
   title: 'GM World | Good Morning on Base',
   description: 'Send GM/GN messages on-chain. A global greeting dApp on Base.',
+  icons: {
+    icon: [
+      { url: '/favicon.svg', type: 'image/svg+xml' },
+      { url: '/icon', type: 'image/png', sizes: '32x32' },
+    ],
+  },
 };
 
 export default async function RootLayout({
@@ -19,8 +27,14 @@ export default async function RootLayout({
 }: {
   children: React.ReactNode;
 }) {
-  const headersList = await headers();
-  const initialState = cookieToInitialState(config, headersList.get('cookie'));
+  let initialState;
+  try {
+    const cookieStore = await cookies();
+    const cookie = cookieStore.getAll().map((c) => `${c.name}=${c.value}`).join('; ');
+    initialState = cookie ? cookieToInitialState(config, cookie) : undefined;
+  } catch {
+    initialState = undefined;
+  }
 
   return (
     <html lang="en" className="dark">
