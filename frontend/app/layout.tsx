@@ -7,6 +7,7 @@ const jetbrains = JetBrains_Mono({ subsets: ['latin'], variable: '--font-mono' }
 
 const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://worldgm.xyz';
 const ogImage = `${baseUrl}/og-image.png`;
+const embedImage = `${baseUrl}/embed-image.png`;
 
 export const metadata: Metadata = {
   metadataBase: new URL(baseUrl),
@@ -30,7 +31,21 @@ export const metadata: Metadata = {
   other: {
     'fc:frame': 'vNext',
     'fc:frame:image': ogImage,
-    'base:app_id': '69a9f33dd600bcd3b68c3fac',
+    'base:app_id': 'bc_v8nzoiyp',
+    'fc:miniapp': JSON.stringify({
+      version: 'next',
+      imageUrl: embedImage,
+      button: {
+        title: 'Open GM World',
+        action: {
+          type: 'launch_miniapp',
+          name: 'GM World',
+          url: baseUrl,
+          splashImageUrl: `${baseUrl}/og-icon.png`,
+          splashBackgroundColor: '#18181b',
+        },
+      },
+    }),
   },
 };
 
