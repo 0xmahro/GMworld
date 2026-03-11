@@ -39,10 +39,13 @@ export async function GET() {
       primaryCategory: 'social',
       tags: ['social', 'gm', 'greetings', 'base'],
       heroImageUrl: `${baseUrl}/og-image.png`,
-      tagline: 'GM/GN on-chain',
-      ogTitle: 'GM World | Good Morning on Base',
+      tagline: 'GM GN greetings',
+      ogTitle: 'GM World',
       ogDescription: 'Say Good Morning or Good Night on-chain. A global dApp.',
       ogImageUrl: `${baseUrl}/og-image.png`,
+      noindex: false,
+      requiredChains: ['eip155:8453'],
+      canonicalDomain: 'worldgm.xyz',
     },
   };
 
