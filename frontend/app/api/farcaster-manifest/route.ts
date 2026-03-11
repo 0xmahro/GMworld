@@ -34,7 +34,7 @@ export async function GET() {
       homeUrl: baseUrl,
       iconUrl: `${baseUrl}/og-icon.png`,
       splashImageUrl: `${baseUrl}/og-icon.png`,
-      splashBackgroundColor: '#18181b',
+      splashBackgroundColor: '#fde68a',
       screenshotUrls: [`${baseUrl}/og-image.png`],
       primaryCategory: 'social',
       tags: ['social', 'gm', 'greetings', 'base'],

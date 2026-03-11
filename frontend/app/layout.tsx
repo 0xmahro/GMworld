@@ -19,7 +19,7 @@ const fcMiniappEmbed = {
       name: 'GM World',
       url: baseUrl,
       splashImageUrl: `${baseUrl}/og-icon.png`,
-      splashBackgroundColor: '#18181b',
+      splashBackgroundColor: '#fde68a',
     },
   },
 };

@@ -12,21 +12,17 @@ export async function GET() {
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
-          background: '#18181b',
+          background: 'linear-gradient(135deg, #fef3c7 0%, #fde68a 50%, #fbbf24 100%)',
           borderRadius: 256,
         }}
       >
-        <div
-          style={{
-            fontSize: 320,
-            fontWeight: 800,
-            color: 'white',
-          }}
-        >
-          GM
-        </div>
+        <div style={{ fontSize: 480 }}>☀️</div>
       </div>
     ),
-    { width: 1024, height: 1024 }
+    {
+      width: 1024,
+      height: 1024,
+      headers: { 'Cache-Control': 'public, max-age=86400, immutable' },
+    }
   );
 }
