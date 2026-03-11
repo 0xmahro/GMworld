@@ -9,6 +9,21 @@ const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://worldgm.xyz';
 const ogImage = `${baseUrl}/og-image.png`;
 const embedImage = `${baseUrl}/embed-image.png`;
 
+const fcMiniappEmbed = {
+  version: '1',
+  imageUrl: embedImage,
+  button: {
+    title: 'Open GM World',
+    action: {
+      type: 'launch_miniapp',
+      name: 'GM World',
+      url: baseUrl,
+      splashImageUrl: `${baseUrl}/og-icon.png`,
+      splashBackgroundColor: '#18181b',
+    },
+  },
+};
+
 export const metadata: Metadata = {
   metadataBase: new URL(baseUrl),
   title: 'GM World | Good Morning on Base',
@@ -29,23 +44,9 @@ export const metadata: Metadata = {
     description: 'Say GM or GN on-chain. A global greeting dApp on Base.',
   },
   other: {
-    'fc:frame': 'vNext',
-    'fc:frame:image': ogImage,
     'base:app_id': 'bc_v8nzoiyp',
-    'fc:miniapp': JSON.stringify({
-      version: 'next',
-      imageUrl: embedImage,
-      button: {
-        title: 'Open GM World',
-        action: {
-          type: 'launch_miniapp',
-          name: 'GM World',
-          url: baseUrl,
-          splashImageUrl: `${baseUrl}/og-icon.png`,
-          splashBackgroundColor: '#18181b',
-        },
-      },
-    }),
+    'fc:miniapp': JSON.stringify(fcMiniappEmbed),
+    'fc:frame': JSON.stringify(fcMiniappEmbed),
   },
 };
 
