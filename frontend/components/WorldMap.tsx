@@ -59,16 +59,17 @@ function buildMarkers(phraseCounts: Record<string, number>) {
   return markers;
 }
 
-/** Round coords to ~200km grid so nearby countries (e.g. Mediterranean) group together */
+/** Coarse grid (~500km) so neighboring countries (Mediterranean, Europe) share a region */
 function coordKey([lng, lat]: [number, number]) {
-  const step = 2;
+  const step = 5;
   return `${Math.round(lng / step) * step},${Math.round(lat / step) * step}`;
 }
 
-const LABEL_HEIGHT = 18;
-const LABEL_WIDTH = 140;
+const LABEL_HEIGHT = 13;
+const LABEL_WIDTH = 95;
+const FONT_SIZE = 9;
 
-/** Assign dx/dy so labels form a 2D grid per region and don't overlap */
+/** Assign dx/dy: 2D grid per region, more columns so labels spread horizontally and don’t overlap */
 function assignOffsets<T extends { coords: [number, number] }>(markers: T[]) {
   const byRegion = new Map<string, T[]>();
   for (const m of markers) {
@@ -79,14 +80,16 @@ function assignOffsets<T extends { coords: [number, number] }>(markers: T[]) {
   }
   const result: (T & { dx: number; dy: number })[] = [];
   for (const list of Array.from(byRegion.values())) {
-    const cols = Math.max(1, Math.ceil(Math.sqrt(list.length)));
+    const n = list.length;
+    const cols = n <= 2 ? n : n <= 6 ? 3 : 4;
+    const rows = Math.ceil(n / cols);
     list.forEach((m, i) => {
       const row = Math.floor(i / cols);
       const col = i % cols;
       result.push({
         ...m,
-        dx: 20 + col * (LABEL_WIDTH * 0.85),
-        dy: -8 + row * LABEL_HEIGHT,
+        dx: 12 + col * LABEL_WIDTH,
+        dy: -4 + row * LABEL_HEIGHT,
       });
     });
   }
@@ -155,12 +158,12 @@ export function WorldMap() {
               connectorProps={{ stroke: 'rgba(20, 184, 166, 0.5)', strokeWidth: 1 }}
             >
               <text
-                x={20}
+                x={12}
                 y={0}
                 textAnchor="start"
                 dominantBaseline="middle"
                 fill="#e4e4e7"
-                fontSize={11}
+                fontSize={FONT_SIZE}
                 fontWeight={500}
               >
                 {m.flag} {m.phrase} ({m.count})
