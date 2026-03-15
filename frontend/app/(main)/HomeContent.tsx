@@ -6,7 +6,7 @@ import { LanguageSelector } from '@/components/LanguageSelector';
 import { GMButtons } from '@/components/GMButtons';
 import { GlobalCounters } from '@/components/GlobalCounters';
 import { MessageFeed } from '@/components/MessageFeed';
-import { WorldMap } from '@/components/WorldMap';
+import { LanguageRanking } from '@/components/LanguageRanking';
 import { LANGUAGES, type Language } from '@/lib/languages';
 
 export default function HomeContent() {
@@ -35,9 +35,9 @@ export default function HomeContent() {
 
         <section>
           <h2 className="text-sm font-medium text-zinc-500 uppercase tracking-wider mb-4">
-            GM Activity Map
+            Dil sıralaması (GM / GN)
           </h2>
-          <WorldMap />
+          <LanguageRanking />
         </section>
 
         <section>
