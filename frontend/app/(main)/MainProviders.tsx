@@ -4,7 +4,6 @@ import { useEffect, useState } from 'react';
 import { cookieToInitialState } from 'wagmi';
 import { config } from '@/lib/wagmi';
 import { Providers } from '../providers';
-
 export default function MainProviders({
   children,
 }: {
