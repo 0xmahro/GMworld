@@ -1,6 +1,7 @@
-import { createStorage, cookieStorage } from 'wagmi';
+import { createConfig, createStorage, cookieStorage, http } from 'wagmi';
 import { base } from 'wagmi/chains';
-import { getDefaultConfig } from '@rainbow-me/rainbowkit';
+import { getDefaultWallets } from '@rainbow-me/rainbowkit';
+import { farcasterMiniApp } from '@farcaster/miniapp-wagmi-connector';
 
 // Sun emoji as SVG data URL for chain icon
 const sunIconUrl =
@@ -15,13 +16,20 @@ const baseWithSunIcon = {
   iconBackground: '#1a1a1a',
 };
 
-export const config = getDefaultConfig({
+const projectId = process.env.NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID || 'YOUR_PROJECT_ID';
+const { connectors: rainbowConnectors } = getDefaultWallets({
   appName: 'GM World',
-  projectId: process.env.NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID || 'YOUR_PROJECT_ID',
+  projectId,
+});
+
+/** Farcaster Mini App connector first: Base/Farcaster içinde cüzdan otomatik bağlanır. */
+export const config = createConfig({
   chains: [baseWithSunIcon],
-  ssr: true,
+  transports: { [base.id]: http() },
+  connectors: [farcasterMiniApp(), ...rainbowConnectors],
   storage: createStorage({
     key: 'gmworld-wagmi',
     storage: cookieStorage,
   }),
+  ssr: true,
 });

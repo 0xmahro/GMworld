@@ -1,11 +1,18 @@
 /**
  * GMWorld Contract Configuration
  * V2: payable - fee (0.000025 ETH) goes to owner
- * Set NEXT_PUBLIC_GMWORLD_ADDRESS after deploying GMWorldV2
+ * Set NEXT_PUBLIC_GMWORLD_ADDRESS after deploying GMWorldV2.
+ *
+ * IMPORTANT: There is deliberately NO fallback address here.
+ * If the env var is missing, build will fail instead of silently
+ * sending transactions to a wrong contract.
  */
-export const GMWORLD_ADDRESS = (
-  process.env.NEXT_PUBLIC_GMWORLD_ADDRESS || '0x37b0F43D003e0593266747a55F6AEC3709A7bE20'
-) as `0x${string}`;
+if (!process.env.NEXT_PUBLIC_GMWORLD_ADDRESS) {
+  throw new Error('NEXT_PUBLIC_GMWORLD_ADDRESS is not set');
+}
+
+export const GMWORLD_ADDRESS = process.env
+  .NEXT_PUBLIC_GMWORLD_ADDRESS as `0x${string}`;
 
 /** Fee in wei: 0.000025 ETH */
 export const GMWORLD_FEE_WEI = 25000000000000n;

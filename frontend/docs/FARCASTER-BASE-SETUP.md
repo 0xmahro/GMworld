@@ -36,7 +36,35 @@ Paylaşıldığında Warpcast’te link önizlemesi ve Frame olarak görünecek.
 
 ---
 
-## 3. Neynar Sign in with Farcaster (Opsiyonel)
+## 3. Farcaster Discovery & Search
+
+**Yapıldı:** [Farcaster Discovery](https://miniapps.farcaster.xyz/docs/guides/discovery) gereksinimlerine uygun.
+
+### Manifest kaydı (önemli)
+
+Uygulamanın Farcaster arama ve katalogda görünmesi için manifest’i kaydetmen gerekiyor:
+
+1. https://farcaster.xyz/~/developers/mini-apps/manifest adresine git
+2. Domain’ini gir (`worldgm.xyz`)
+3. Yeşil tik çıkana kadar account association’ı doğrula
+
+### Yapılan entegrasyonlar
+
+- `noindex: false` – Arama sonuçlarına dahil
+- `requiredChains: ["eip155:8453"]` – Base chain
+- `canonicalDomain` – Domain tanımı
+- `fc:miniapp` meta – Paylaşımda zengin embed
+- Mini App SDK `ready()` – Splash ekranı kapatma
+
+### Görünürlük gereksinimleri
+
+- Production domain (ngrok vb. hariç)
+- Geçerli `iconUrl` (1024x1024 PNG)
+- Kullanım – indeksleme için minimum engagement gerekebilir
+
+---
+
+## 4. Neynar Sign in with Farcaster (Opsiyonel)
 
 Neynar ile Farcaster girişi eklemek için:
 
@@ -89,5 +117,8 @@ import "@neynar/react/dist/style.css";
 |---------------------------------|---------|------------------------------------|
 | Base manifest `/.well-known/farcaster.json` | Hazır   | Env’leri doldur + account association |
 | Farcaster Frame meta tags       | Hazır   | OG + fc:frame                      |
+| Farcaster Discovery             | Hazır   | Manifest: farcaster.xyz/~/developers/mini-apps/manifest |
+| fc:miniapp embed                | Hazır   | Paylaşımda zengin kart             |
+| Mini App SDK ready()            | Hazır   | Splash ekranı kapatma              |
 | Dinamik OG görselleri           | Hazır   | `/og-image.png`, `/og-icon.png`   |
 | Neynar Sign in                  | Opsiyonel | React 19 + Neynar SDK gerekli     |

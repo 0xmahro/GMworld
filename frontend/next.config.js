@@ -5,6 +5,7 @@ const nextConfig = {
     return [
       { source: '/.well-known/farcaster.json', destination: '/api/farcaster-manifest' },
       { source: '/og-image.png', destination: '/og-image' },
+      { source: '/embed-image.png', destination: '/embed-image' },
       { source: '/og-icon.png', destination: '/og-icon' },
     ];
   },
