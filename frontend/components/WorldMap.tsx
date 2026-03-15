@@ -59,12 +59,16 @@ function buildMarkers(phraseCounts: Record<string, number>) {
   return markers;
 }
 
-/** Round coords to ~50km grid for grouping nearby markers */
+/** Round coords to ~200km grid so nearby countries (e.g. Mediterranean) group together */
 function coordKey([lng, lat]: [number, number]) {
-  return `${Math.round(lng * 2) / 2},${Math.round(lat * 2) / 2}`;
+  const step = 2;
+  return `${Math.round(lng / step) * step},${Math.round(lat / step) * step}`;
 }
 
-/** Assign vertical offset (dy) to avoid overlap when multiple labels share same region */
+const LABEL_HEIGHT = 18;
+const LABEL_WIDTH = 140;
+
+/** Assign dx/dy so labels form a 2D grid per region and don't overlap */
 function assignOffsets<T extends { coords: [number, number] }>(markers: T[]) {
   const byRegion = new Map<string, T[]>();
   for (const m of markers) {
@@ -73,11 +77,17 @@ function assignOffsets<T extends { coords: [number, number] }>(markers: T[]) {
     list.push(m);
     byRegion.set(key, list);
   }
-  const LABEL_HEIGHT = 14;
-  const result: (T & { dy: number })[] = [];
+  const result: (T & { dx: number; dy: number })[] = [];
   for (const list of Array.from(byRegion.values())) {
+    const cols = Math.max(1, Math.ceil(Math.sqrt(list.length)));
     list.forEach((m, i) => {
-      result.push({ ...m, dy: -5 + i * LABEL_HEIGHT });
+      const row = Math.floor(i / cols);
+      const col = i % cols;
+      result.push({
+        ...m,
+        dx: 20 + col * (LABEL_WIDTH * 0.85),
+        dy: -8 + row * LABEL_HEIGHT,
+      });
     });
   }
   return result;
@@ -138,9 +148,9 @@ export function WorldMap() {
           </Geographies>
           {markers.map((m) => (
             <Annotation
-              key={m.phrase}
+              key={`${m.coords[0]}-${m.coords[1]}-${m.phrase}`}
               subject={m.coords}
-              dx={20}
+              dx={m.dx}
               dy={m.dy}
               connectorProps={{ stroke: 'rgba(20, 184, 166, 0.5)', strokeWidth: 1 }}
             >
