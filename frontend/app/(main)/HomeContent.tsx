@@ -7,6 +7,7 @@ import { GMButtons } from '@/components/GMButtons';
 import { GlobalCounters } from '@/components/GlobalCounters';
 import { MessageFeed } from '@/components/MessageFeed';
 import { LanguageRanking } from '@/components/LanguageRanking';
+import { ShareOnFarcaster } from '@/components/ShareOnFarcaster';
 import { LANGUAGES, type Language } from '@/lib/languages';
 
 export default function HomeContent() {
@@ -30,6 +31,9 @@ export default function HomeContent() {
             <LanguageSelector value={language} onChange={setLanguage} />
           </div>
           <GMButtons language={language} />
+          <div className="flex justify-center">
+            <ShareOnFarcaster label="Share GM World on Farcaster" compact />
+          </div>
           <GlobalCounters />
         </section>
 

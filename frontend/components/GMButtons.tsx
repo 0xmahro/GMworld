@@ -5,6 +5,7 @@ import { useAccount } from 'wagmi';
 import { useGMWorld } from '@/hooks/useGMWorld';
 import { useMessages } from '@/hooks/useMessages';
 import { supabase } from '@/lib/supabase';
+import { ShareOnFarcaster } from '@/components/ShareOnFarcaster';
 import type { Language } from '@/lib/languages';
 
 interface GMButtonsProps {
@@ -165,6 +166,14 @@ export function GMButtons({ language }: GMButtonsProps) {
           status={lastSent === 'gn' ? status : 'idle'}
         />
       </div>
+      {status === 'success' && lastMessage && (
+        <div className="flex justify-center pt-2">
+          <ShareOnFarcaster
+            text={`Just said ${lastMessage} on GM World ☀️\n${process.env.NEXT_PUBLIC_APP_URL || 'https://worldgm.xyz'}`}
+            label="Share on Farcaster"
+          />
+        </div>
+      )}
       {status === 'failed' && (
         <div className="flex items-center justify-center gap-2 py-2 px-4 rounded-lg bg-red-500/10 border border-red-500/30 text-red-400 text-sm">
           <svg className="w-4 h-4 shrink-0" fill="currentColor" viewBox="0 0 20 20">
