@@ -7,6 +7,7 @@ import { GMButtons } from '@/components/GMButtons';
 import { GlobalCounters } from '@/components/GlobalCounters';
 import { MessageFeed } from '@/components/MessageFeed';
 import { LanguageRanking } from '@/components/LanguageRanking';
+import { DrinksSection } from '@/components/DrinksSection';
 import { ShareOnFarcaster } from '@/components/ShareOnFarcaster';
 import { LANGUAGES, type Language } from '@/lib/languages';
 
@@ -36,6 +37,8 @@ export default function HomeContent() {
           </div>
           <GlobalCounters />
         </section>
+
+        <DrinksSection />
 
         <section>
           <h2 className="text-sm font-medium text-zinc-500 uppercase tracking-wider mb-4">

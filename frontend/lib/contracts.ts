@@ -41,3 +41,56 @@ export const GMWORLD_ABI = [
     type: 'event',
   },
 ] as const;
+
+/**
+ * Drinks Contract Configuration
+ *
+ * Deploy `contracts/WorldGMDrinks.sol` manually and set `NEXT_PUBLIC_DRINKS_ADDRESS`.
+ */
+if (!process.env.NEXT_PUBLIC_DRINKS_ADDRESS) {
+  throw new Error('NEXT_PUBLIC_DRINKS_ADDRESS is not set');
+}
+
+export const DRINKS_ADDRESS = process.env
+  .NEXT_PUBLIC_DRINKS_ADDRESS as `0x${string}`;
+
+/** Default price in wei: 0.00003 ETH */
+export const DRINK_PRICE_WEI = 30000000000000n;
+
+export const DRINKS_ABI = [
+  {
+    inputs: [],
+    name: 'getDrinksLength',
+    outputs: [{ name: '', type: 'uint256', internalType: 'uint256' }],
+    stateMutability: 'view',
+    type: 'function',
+  },
+  {
+    inputs: [{ name: 'drinkId', type: 'uint256', internalType: 'uint256' }],
+    name: 'buyDrink',
+    outputs: [],
+    stateMutability: 'payable',
+    type: 'function',
+  },
+  {
+    inputs: [{ name: '', type: 'uint256', internalType: 'uint256' }],
+    name: 'drinks',
+    outputs: [
+      { name: 'name', type: 'string', internalType: 'string' },
+      { name: 'price', type: 'uint256', internalType: 'uint256' },
+      { name: 'totalPurchased', type: 'uint256', internalType: 'uint256' },
+    ],
+    stateMutability: 'view',
+    type: 'function',
+  },
+  {
+    anonymous: false,
+    inputs: [
+      { name: 'buyer', type: 'address', indexed: true, internalType: 'address' },
+      { name: 'drink', type: 'string', indexed: false, internalType: 'string' },
+      { name: 'amount', type: 'uint256', indexed: false, internalType: 'uint256' },
+    ],
+    name: 'DrinkPurchased',
+    type: 'event',
+  },
+] as const;

@@ -4,7 +4,8 @@
   "description": "GMWorld smart contract",
   "scripts": {
     "compile": "forge build",
-    "deploy:base": "forge create GMWorldV2.sol:GMWorldV2 --rpc-url https://mainnet.base.org --private-key ${PRIVATE_KEY}"
+    "deploy:base": "forge create GMWorldV2.sol:GMWorldV2 --rpc-url https://mainnet.base.org --private-key ${PRIVATE_KEY}",
+    "deploy:drinks:base": "forge create WorldGMDrinks.sol:WorldGMDrinks --rpc-url https://mainnet.base.org --private-key ${PRIVATE_KEY}"
   },
   "keywords": ["solidity", "base", "gm"],
   "license": "MIT"

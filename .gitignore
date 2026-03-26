@@ -30,3 +30,9 @@ yarn-error.log*
 
 # Vercel
 .vercel
+
+# Foundry / Solidity build artifacts
+contracts/cache/
+contracts/out/
+contracts/lib/
+contracts/foundry.lock

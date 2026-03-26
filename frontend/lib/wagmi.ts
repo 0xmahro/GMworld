@@ -1,5 +1,5 @@
 import { createConfig, createStorage, cookieStorage, http } from 'wagmi';
-import { base } from 'wagmi/chains';
+import { base, foundry } from 'wagmi/chains';
 import { getDefaultWallets } from '@rainbow-me/rainbowkit';
 import { farcasterMiniApp } from '@farcaster/miniapp-wagmi-connector';
 
@@ -24,8 +24,11 @@ const { connectors: rainbowConnectors } = getDefaultWallets({
 
 /** Farcaster Mini App connector first: Base/Farcaster içinde cüzdan otomatik bağlanır. */
 export const config = createConfig({
-  chains: [baseWithSunIcon],
-  transports: { [base.id]: http() },
+  chains: process.env.NODE_ENV === 'development' ? [foundry, baseWithSunIcon] : [baseWithSunIcon],
+  transports:
+    process.env.NODE_ENV === 'development'
+      ? { [foundry.id]: http('http://127.0.0.1:8545'), [base.id]: http() }
+      : { [base.id]: http() },
   connectors: [farcasterMiniApp(), ...rainbowConnectors],
   storage: createStorage({
     key: 'gmworld-wagmi',
