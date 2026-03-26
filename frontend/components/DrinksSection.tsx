@@ -48,10 +48,11 @@ export function DrinksSection() {
       DRINKS.map((_, i) => ({
         address: DRINKS_ADDRESS,
         abi: DRINKS_ABI,
+        chainId: requiredChainId,
         functionName: 'drinks' as const,
         args: [BigInt(i)] as const,
       })),
-    []
+    [requiredChainId]
   );
 
   const { data: drinksData, refetch: refetchDrinks } = useReadContracts({

@@ -34,6 +34,9 @@ export function useMessages() {
   const { data, refetch, isLoading } = useQuery({
     queryKey: ['gm-messages'],
     queryFn: async () => {
+      const todayStart = getTodayStart();
+
+      // Keep the feed lightweight (latest 200), but compute totals via COUNT queries (no cap).
       const { data: rows, error } = await supabase
         .from('messages')
         .select('user_address, message, timestamp')
@@ -42,28 +45,48 @@ export function useMessages() {
 
       if (error) throw error;
 
-      const todayStart = getTodayStart();
-      let gmToday = 0;
-      let gnToday = 0;
-      let gmTotal = 0;
-      let gnTotal = 0;
-
       const messages: GMMessage[] = (rows ?? []).map((r) => {
         const msg = r.message;
-        if (GM_PHRASES.has(msg)) {
-          gmTotal++;
-          if (r.timestamp >= todayStart) gmToday++;
-        }
-        if (GN_PHRASES.has(msg)) {
-          gnTotal++;
-          if (r.timestamp >= todayStart) gnToday++;
-        }
         return {
           user: r.user_address,
           message: msg,
           timestamp: r.timestamp,
         };
       });
+
+      const gmList = Array.from(GM_PHRASES);
+      const gnList = Array.from(GN_PHRASES);
+
+      const [
+        { count: gmTotal, error: gmTotalErr },
+        { count: gnTotal, error: gnTotalErr },
+        { count: gmToday, error: gmTodayErr },
+        { count: gnToday, error: gnTodayErr },
+      ] = await Promise.all([
+        supabase
+          .from('messages')
+          .select('id', { count: 'exact', head: true })
+          .in('message', gmList),
+        supabase
+          .from('messages')
+          .select('id', { count: 'exact', head: true })
+          .in('message', gnList),
+        supabase
+          .from('messages')
+          .select('id', { count: 'exact', head: true })
+          .in('message', gmList)
+          .gte('timestamp', todayStart),
+        supabase
+          .from('messages')
+          .select('id', { count: 'exact', head: true })
+          .in('message', gnList)
+          .gte('timestamp', todayStart),
+      ]);
+
+      if (gmTotalErr) throw gmTotalErr;
+      if (gnTotalErr) throw gnTotalErr;
+      if (gmTodayErr) throw gmTodayErr;
+      if (gnTodayErr) throw gnTodayErr;
 
       return { messages, gmToday, gnToday, gmTotal, gnTotal };
     },
