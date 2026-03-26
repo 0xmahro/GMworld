@@ -24,15 +24,30 @@ const { connectors: rainbowConnectors } = getDefaultWallets({
 
 /** Farcaster Mini App connector first: Base/Farcaster içinde cüzdan otomatik bağlanır. */
 export const config = createConfig({
-  chains: process.env.NODE_ENV === 'development' ? [foundry, baseWithSunIcon] : [baseWithSunIcon],
-  transports:
-    process.env.NODE_ENV === 'development'
-      ? { [foundry.id]: http('http://127.0.0.1:8545'), [base.id]: http() }
-      : { [base.id]: http() },
-  connectors: [farcasterMiniApp(), ...rainbowConnectors],
-  storage: createStorage({
-    key: 'gmworld-wagmi',
-    storage: cookieStorage,
-  }),
-  ssr: true,
+  // NOTE: Keep the config strongly typed for both dev & prod.
+  // Using inline conditionals here confuses TS and breaks Vercel builds.
+  ...(process.env.NODE_ENV === 'development'
+    ? createConfig({
+        chains: [foundry, baseWithSunIcon],
+        transports: {
+          [foundry.id]: http('http://127.0.0.1:8545'),
+          [base.id]: http(),
+        },
+        connectors: [farcasterMiniApp(), ...rainbowConnectors],
+        storage: createStorage({
+          key: 'gmworld-wagmi',
+          storage: cookieStorage,
+        }),
+        ssr: true,
+      })
+    : createConfig({
+        chains: [baseWithSunIcon],
+        transports: { [base.id]: http() },
+        connectors: [farcasterMiniApp(), ...rainbowConnectors],
+        storage: createStorage({
+          key: 'gmworld-wagmi',
+          storage: cookieStorage,
+        }),
+        ssr: true,
+      })),
 });
