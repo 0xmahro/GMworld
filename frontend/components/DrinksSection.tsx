@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import {
   useAccount,
   useChainId,
@@ -118,6 +118,18 @@ export function DrinksSection() {
       ? `You bought ${lastBought}! 🎉`
       : 'Buy a drink on-chain (Base) — just for fun.';
 
+  // After a successful purchase, refetch counts quickly (indexer/cache can lag).
+  useEffect(() => {
+    if (status !== 'success') return;
+    refetchDrinks();
+    const t1 = setTimeout(refetchDrinks, 800);
+    const t2 = setTimeout(refetchDrinks, 2500);
+    return () => {
+      clearTimeout(t1);
+      clearTimeout(t2);
+    };
+  }, [status, refetchDrinks]);
+
   return (
     <section className="space-y-4">
       <div className="flex items-end justify-between gap-4">
@@ -149,7 +161,7 @@ export function DrinksSection() {
                 <span>
                   Price:{' '}
                   <span className="text-zinc-300">
-                    {row.priceWei ? `~${formatEth(row.priceWei)} ETH` : '—'}
+                    0.00003 ETH
                   </span>
                 </span>
                 <span>
