@@ -1,26 +1,51 @@
 'use client';
 
-import { useMemo } from 'react';
-import { useMessages } from '@/hooks/useMessages';
+import { useQuery } from '@tanstack/react-query';
 import { LANGUAGES } from '@/lib/languages';
+import { supabase } from '@/lib/supabase';
 
 type Row = { lang: (typeof LANGUAGES)[0]; gm: number; gn: number; total: number };
 
 export function LanguageRanking() {
-  const { messages } = useMessages();
+  const { data: ranking = [], isLoading } = useQuery({
+    queryKey: ['language-ranking'],
+    queryFn: async () => {
+      const rows = await Promise.all(
+        LANGUAGES.map(async (lang): Promise<Row> => {
+          const [{ count: gmCount, error: gmErr }, { count: gnCount, error: gnErr }] =
+            await Promise.all([
+              supabase
+                .from('messages')
+                .select('id', { count: 'exact', head: true })
+                .eq('message', lang.gm),
+              supabase
+                .from('messages')
+                .select('id', { count: 'exact', head: true })
+                .eq('message', lang.gn),
+            ]);
 
-  const ranking = useMemo(() => {
-    const phraseCounts: Record<string, number> = {};
-    for (const m of messages) {
-      phraseCounts[m.message] = (phraseCounts[m.message] ?? 0) + 1;
-    }
-    const rows: Row[] = LANGUAGES.map((lang) => {
-      const gm = phraseCounts[lang.gm] ?? 0;
-      const gn = phraseCounts[lang.gn] ?? 0;
-      return { lang, gm, gn, total: gm + gn };
-    });
-    return rows.filter((r) => r.total > 0).sort((a, b) => b.total - a.total);
-  }, [messages]);
+          if (gmErr) throw gmErr;
+          if (gnErr) throw gnErr;
+
+          const gm = gmCount ?? 0;
+          const gn = gnCount ?? 0;
+          return { lang, gm, gn, total: gm + gn };
+        })
+      );
+
+      return rows.filter((r) => r.total > 0).sort((a, b) => b.total - a.total);
+    },
+    refetchInterval: 10_000,
+    staleTime: 5_000,
+  });
+
+  if (isLoading) {
+    return (
+      <div className="rounded-xl border border-zinc-700/50 bg-zinc-900/30 px-6 py-8 text-center text-zinc-500 text-sm">
+        Dil sıralaması yükleniyor...
+      </div>
+    );
+  }
 
   if (ranking.length === 0) {
     return (
