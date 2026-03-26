@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import {
   useAccount,
   useChainId,
@@ -11,6 +11,7 @@ import {
 } from 'wagmi';
 import { useConnectModal } from '@rainbow-me/rainbowkit';
 import { DRINKS_ABI, DRINKS_ADDRESS, DRINK_PRICE_WEI } from '@/lib/contracts';
+import { supabase } from '@/lib/supabase';
 
 const DRINKS = [
   { emoji: '☕', label: 'Coffee' },
@@ -33,12 +34,13 @@ type DrinkRow = {
 };
 
 export function DrinksSection() {
-  const { isConnected } = useAccount();
+  const { isConnected, address } = useAccount();
   const chainId = useChainId();
   const { switchChainAsync, isPending: isSwitching } = useSwitchChain();
   const { openConnectModal } = useConnectModal();
 
   const [lastBought, setLastBought] = useState<string | null>(null);
+  const loggedFeedHash = useRef<string | null>(null);
   const isDev = process.env.NODE_ENV === 'development';
   const requiredChainId = isDev ? 31337 : 8453; // Foundry locally, Base in prod
   const isWrongNetwork = chainId !== requiredChainId;
@@ -129,6 +131,24 @@ export function DrinksSection() {
       clearTimeout(t2);
     };
   }, [status, refetchDrinks]);
+
+  // Write drink purchases to live feed.
+  useEffect(() => {
+    if (!isConfirmed || !hash || !address || !lastBought) return;
+    if (loggedFeedHash.current === hash) return;
+    loggedFeedHash.current = hash;
+    const feedMessage = `Bought ${lastBought.replace(/^[^\w]+\\s*/, '')}`;
+    supabase
+      .from('messages')
+      .insert({
+        user_address: address,
+        message: feedMessage,
+        timestamp: Math.floor(Date.now() / 1000),
+      })
+      .then(() => {
+        // no-op: live feed query polls
+      });
+  }, [isConfirmed, hash, address, lastBought]);
 
   return (
     <section className="space-y-4">

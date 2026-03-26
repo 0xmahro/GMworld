@@ -9,6 +9,7 @@ function shortAddress(addr: string) {
 }
 
 function getFlag(message: string) {
+  if (message.startsWith('Bought ')) return '🥤';
   const lang = LANGUAGES.find((l) => l.gm === message || l.gn === message);
   return lang?.flag ?? '🌍';
 }
