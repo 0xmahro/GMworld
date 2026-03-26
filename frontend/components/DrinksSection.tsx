@@ -63,14 +63,13 @@ export function DrinksSection() {
 
   const rows: DrinkRow[] = useMemo(() => {
     return DRINKS.map((d, i) => {
-      const r = drinksData?.[i]?.result as
-        | { name: string; price: bigint; totalPurchased: bigint }
-        | undefined;
+      const result = drinksData?.[i]?.result as unknown;
+      const r = decodeDrinkResult(result);
 
       return {
         id: i,
         display: `${d.emoji} ${d.label}`,
-        priceWei: r?.price,
+        priceWei: r?.priceWei,
         totalPurchased: r?.totalPurchased,
       };
     });
@@ -229,5 +228,33 @@ function formatEth(wei: bigint): string {
   const whole = s.slice(0, -18).replace(/^0+/, '') || '0';
   const frac = s.slice(-18).replace(/0+$/, '').slice(0, 6);
   return frac ? `${whole}.${frac}` : whole;
+}
+
+function decodeDrinkResult(
+  result: unknown
+): { name?: string; priceWei?: bigint; totalPurchased?: bigint } | undefined {
+  if (!result) return undefined;
+
+  // Viem can return a tuple (array) or an object with named outputs depending on tooling.
+  if (Array.isArray(result)) {
+    const [name, priceWei, totalPurchased] = result as [unknown, unknown, unknown];
+    return {
+      name: typeof name === 'string' ? name : undefined,
+      priceWei: typeof priceWei === 'bigint' ? priceWei : undefined,
+      totalPurchased: typeof totalPurchased === 'bigint' ? totalPurchased : undefined,
+    };
+  }
+
+  if (typeof result === 'object' && result !== null) {
+    const r = result as Record<string, unknown>;
+    return {
+      name: typeof r.name === 'string' ? r.name : undefined,
+      priceWei: typeof r.price === 'bigint' ? (r.price as bigint) : undefined,
+      totalPurchased:
+        typeof r.totalPurchased === 'bigint' ? (r.totalPurchased as bigint) : undefined,
+    };
+  }
+
+  return undefined;
 }
 
