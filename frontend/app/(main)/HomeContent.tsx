@@ -8,6 +8,7 @@ import { GlobalCounters } from '@/components/GlobalCounters';
 import { MessageFeed } from '@/components/MessageFeed';
 import { LanguageRanking } from '@/components/LanguageRanking';
 import { DrinksSection } from '@/components/DrinksSection';
+import { ActiveUsersBadge } from '@/components/ActiveUsersBadge';
 import { ShareOnFarcaster } from '@/components/ShareOnFarcaster';
 import { LANGUAGES, type Language } from '@/lib/languages';
 
@@ -18,7 +19,10 @@ export default function HomeContent() {
     <main className="min-h-screen bg-zinc-950">
       <header className="border-b border-zinc-800/50 sticky top-0 z-40 bg-zinc-950/80 backdrop-blur">
         <div className="max-w-6xl mx-auto px-4 py-4 flex items-center justify-between">
-          <h1 className="text-xl font-bold tracking-tight">GM World</h1>
+          <div className="flex items-center gap-3">
+            <h1 className="text-xl font-bold tracking-tight">GM World</h1>
+            <ActiveUsersBadge />
+          </div>
           <WalletButton />
         </div>
       </header>
