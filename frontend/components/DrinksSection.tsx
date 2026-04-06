@@ -5,11 +5,13 @@ import {
   useAccount,
   useChainId,
   useReadContracts,
+  useSendTransaction,
   useSwitchChain,
   useWaitForTransactionReceipt,
-  useWriteContract,
 } from 'wagmi';
+import { encodeFunctionData } from 'viem';
 import { useConnectModal } from '@rainbow-me/rainbowkit';
+import { appendBuilderAttributionIfBase } from '@/lib/builderAttribution';
 import { DRINKS_ABI, DRINKS_ADDRESS, DRINK_PRICE_WEI } from '@/lib/contracts';
 import { supabase } from '@/lib/supabase';
 
@@ -79,19 +81,19 @@ export function DrinksSection() {
   }, [drinksData]);
 
   const {
-    writeContract,
+    sendTransaction,
     data: hash,
-    isPending: isWritePending,
-    error: writeError,
+    isPending: isSendPending,
+    error: sendError,
     reset,
-  } = useWriteContract();
+  } = useSendTransaction();
 
   const { isLoading: isConfirming, isSuccess: isConfirmed } =
     useWaitForTransactionReceipt({ hash });
 
-  const isPending = isWritePending || isConfirming;
+  const isPending = isSendPending || isConfirming;
   const status: 'idle' | 'pending' | 'success' | 'failed' =
-    writeError ? 'failed' : isConfirmed ? 'success' : isPending ? 'pending' : 'idle';
+    sendError ? 'failed' : isConfirmed ? 'success' : isPending ? 'pending' : 'idle';
 
   const buy = async (row: DrinkRow) => {
     setLastBought(null);
@@ -106,11 +108,14 @@ export function DrinksSection() {
 
     const value = row.priceWei ?? DRINK_PRICE_WEI;
     setLastBought(row.display);
-    writeContract({
-      address: DRINKS_ADDRESS,
+    const data = encodeFunctionData({
       abi: DRINKS_ABI,
       functionName: 'buyDrink',
       args: [BigInt(row.id)],
+    });
+    sendTransaction({
+      to: DRINKS_ADDRESS,
+      data: appendBuilderAttributionIfBase(data, chainId),
       value,
     });
   };
