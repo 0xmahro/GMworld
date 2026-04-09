@@ -5,60 +5,75 @@ import {
   useChainId,
   useSendTransaction,
   useWaitForTransactionReceipt,
+  useWriteContract,
 } from 'wagmi';
 import { encodeFunctionData } from 'viem';
 import { appendBuilderAttributionIfBase } from '@/lib/builderAttribution';
-import { getMiniAppChainId, miniAppSendCall } from '@/lib/miniappWalletClient';
 import { GMWORLD_ABI, GMWORLD_ADDRESS, GMWORLD_FEE_WEI } from '@/lib/contracts';
 
 export type TxStatus = 'idle' | 'pending' | 'success' | 'failed';
 
 export function useGMWorld() {
   const chainId = useChainId();
+  const [txMode, setTxMode] = useState<'send' | 'write'>('send');
   const [localHash, setLocalHash] = useState<`0x${string}` | undefined>(undefined);
   const {
     sendTransaction,
-    data: hash,
+    data: sendHash,
     isPending: isSendPending,
-    isSuccess: isSubmitted,
+    isSuccess: isSendSubmitted,
     error: sendError,
-    reset,
+    reset: resetSend,
   } = useSendTransaction();
+  const {
+    writeContract,
+    data: writeHash,
+    isPending: isWritePending,
+    isSuccess: isWriteSubmitted,
+    error: writeError,
+    reset: resetWrite,
+  } = useWriteContract();
 
-  const effectiveHash = (localHash ?? hash) as `0x${string}` | undefined;
+  const effectiveHash = (localHash ?? (txMode === 'write' ? writeHash : sendHash)) as
+    | `0x${string}`
+    | undefined;
   const { isLoading: isConfirming, isSuccess: isConfirmed } =
     useWaitForTransactionReceipt({ hash: effectiveHash });
 
-  const isPending = isSendPending || isConfirming;
-  const isSuccess = isSubmitted && isConfirmed;
-  const error = sendError;
+  const basePending = txMode === 'write' ? isWritePending : isSendPending;
+  const baseSubmitted = txMode === 'write' ? isWriteSubmitted : isSendSubmitted;
+  const error = txMode === 'write' ? writeError : sendError;
+  const isPending = basePending || isConfirming;
+  const isSuccess = baseSubmitted && isConfirmed;
+
+  const reset = () => {
+    resetSend();
+    resetWrite();
+    setLocalHash(undefined);
+  };
 
   const sendMessage = async (message: string) => {
     reset();
-    setLocalHash(undefined);
     const data = encodeFunctionData({
       abi: GMWORLD_ABI,
       functionName: 'sendMessage',
       args: [message],
     });
 
-    // In Farcaster/Base Mini App, some connectors don't implement getChainId().
-    // Use host EIP-1193 provider directly.
+    // In Farcaster/Base Mini App, use writeContract path (connector-compatible).
     const inIframe = typeof window !== 'undefined' && window !== window.top;
     if (inIframe) {
-      const miniChainId = await getMiniAppChainId();
-      if (miniChainId) {
-        const txHash = await miniAppSendCall({
-          to: GMWORLD_ADDRESS,
-          data: appendBuilderAttributionIfBase(data, miniChainId),
-          value: GMWORLD_FEE_WEI,
-          chainId: miniChainId,
-        });
-        setLocalHash(txHash);
-        return txHash;
-      }
+      setTxMode('write');
+      return writeContract({
+        address: GMWORLD_ADDRESS,
+        abi: GMWORLD_ABI,
+        functionName: 'sendMessage',
+        args: [message],
+        value: GMWORLD_FEE_WEI,
+      });
     }
 
+    setTxMode('send');
     return sendTransaction({
       to: GMWORLD_ADDRESS,
       data: appendBuilderAttributionIfBase(data, chainId),

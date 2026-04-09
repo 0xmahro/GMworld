@@ -8,11 +8,11 @@ import {
   useSendTransaction,
   useSwitchChain,
   useWaitForTransactionReceipt,
+  useWriteContract,
 } from 'wagmi';
 import { encodeFunctionData } from 'viem';
 import { useConnectModal } from '@rainbow-me/rainbowkit';
 import { appendBuilderAttributionIfBase } from '@/lib/builderAttribution';
-import { getMiniAppChainId, miniAppSendCall } from '@/lib/miniappWalletClient';
 import { DRINKS_ABI, DRINKS_ADDRESS, DRINK_PRICE_WEI } from '@/lib/contracts';
 import { supabase } from '@/lib/supabase';
 
@@ -44,6 +44,7 @@ export function DrinksSection() {
 
   const [lastBought, setLastBought] = useState<string | null>(null);
   const loggedFeedHash = useRef<string | null>(null);
+  const [txMode, setTxMode] = useState<'send' | 'write'>('send');
   const [localHash, setLocalHash] = useState<`0x${string}` | undefined>(undefined);
   const isDev = process.env.NODE_ENV === 'development';
   const requiredChainId = isDev ? 31337 : 8453; // Foundry locally, Base in prod
@@ -84,19 +85,40 @@ export function DrinksSection() {
 
   const {
     sendTransaction,
-    data: hash,
+    data: sendHash,
     isPending: isSendPending,
     error: sendError,
-    reset,
+    reset: resetSend,
   } = useSendTransaction();
+  const {
+    writeContract,
+    data: writeHash,
+    isPending: isWritePending,
+    error: writeError,
+    reset: resetWrite,
+  } = useWriteContract();
 
-  const effectiveHash = (localHash ?? hash) as `0x${string}` | undefined;
+  const effectiveHash = (localHash ?? (txMode === 'write' ? writeHash : sendHash)) as
+    | `0x${string}`
+    | undefined;
   const { isLoading: isConfirming, isSuccess: isConfirmed } =
     useWaitForTransactionReceipt({ hash: effectiveHash });
 
-  const isPending = isSendPending || isConfirming;
+  const isPending = (txMode === 'write' ? isWritePending : isSendPending) || isConfirming;
   const status: 'idle' | 'pending' | 'success' | 'failed' =
-    sendError ? 'failed' : isConfirmed ? 'success' : isPending ? 'pending' : 'idle';
+    (txMode === 'write' ? writeError : sendError)
+      ? 'failed'
+      : isConfirmed
+        ? 'success'
+        : isPending
+          ? 'pending'
+          : 'idle';
+
+  const reset = () => {
+    resetSend();
+    resetWrite();
+    setLocalHash(undefined);
+  };
 
   const buy = async (row: DrinkRow) => {
     setLastBought(null);
@@ -120,19 +142,18 @@ export function DrinksSection() {
 
     const inIframe = typeof window !== 'undefined' && window !== window.top;
     if (inIframe) {
-      const miniChainId = await getMiniAppChainId();
-      if (miniChainId) {
-        const txHash = await miniAppSendCall({
-          to: DRINKS_ADDRESS,
-          data: appendBuilderAttributionIfBase(data, miniChainId),
-          value,
-          chainId: miniChainId,
-        });
-        setLocalHash(txHash);
-        return;
-      }
+      setTxMode('write');
+      writeContract({
+        address: DRINKS_ADDRESS,
+        abi: DRINKS_ABI,
+        functionName: 'buyDrink',
+        args: [BigInt(row.id)],
+        value,
+      });
+      return;
     }
 
+    setTxMode('send');
     sendTransaction({
       to: DRINKS_ADDRESS,
       data: appendBuilderAttributionIfBase(data, chainId),
