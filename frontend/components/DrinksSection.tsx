@@ -5,14 +5,18 @@ import {
   useAccount,
   useChainId,
   useReadContracts,
+  useSendCalls,
   useSendTransaction,
   useSwitchChain,
+  useWaitForCallsStatus,
   useWaitForTransactionReceipt,
-  useWriteContract,
 } from 'wagmi';
 import { encodeFunctionData } from 'viem';
 import { useConnectModal } from '@rainbow-me/rainbowkit';
-import { appendBuilderAttributionIfBase } from '@/lib/builderAttribution';
+import {
+  appendBuilderAttributionIfBase,
+  getBuilderDataSuffix,
+} from '@/lib/builderAttribution';
 import { DRINKS_ABI, DRINKS_ADDRESS, DRINK_PRICE_WEI } from '@/lib/contracts';
 import { supabase } from '@/lib/supabase';
 
@@ -44,7 +48,7 @@ export function DrinksSection() {
 
   const [lastBought, setLastBought] = useState<string | null>(null);
   const loggedFeedHash = useRef<string | null>(null);
-  const [txMode, setTxMode] = useState<'send' | 'write'>('send');
+  const [txMode, setTxMode] = useState<'send' | 'calls'>('send');
   const [localHash, setLocalHash] = useState<`0x${string}` | undefined>(undefined);
   const isDev = process.env.NODE_ENV === 'development';
   const requiredChainId = isDev ? 31337 : 8453; // Foundry locally, Base in prod
@@ -91,24 +95,35 @@ export function DrinksSection() {
     reset: resetSend,
   } = useSendTransaction();
   const {
-    writeContract,
-    data: writeHash,
-    isPending: isWritePending,
-    error: writeError,
-    reset: resetWrite,
-  } = useWriteContract();
+    sendCalls,
+    data: callsData,
+    isPending: isCallsPending,
+    error: callsError,
+    reset: resetCalls,
+  } = useSendCalls();
+  const callsId = txMode === 'calls' ? callsData?.id : undefined;
+  const { data: callsStatusData, isLoading: isCallsConfirming, isSuccess: isCallsConfirmed } =
+    useWaitForCallsStatus({
+      id: callsId as any,
+      query: { enabled: Boolean(callsId) },
+    } as any);
 
-  const effectiveHash = (localHash ?? (txMode === 'write' ? writeHash : sendHash)) as
+  const callsTxHash =
+    (callsStatusData as any)?.receipts?.[0]?.transactionHash as `0x${string}` | undefined;
+  const effectiveHash = (localHash ?? (txMode === 'calls' ? callsTxHash : sendHash)) as
     | `0x${string}`
     | undefined;
-  const { isLoading: isConfirming, isSuccess: isConfirmed } =
-    useWaitForTransactionReceipt({ hash: effectiveHash });
+  const { isLoading: isSendConfirming, isSuccess: isSendConfirmed } =
+    useWaitForTransactionReceipt({
+      hash: txMode === 'send' ? (effectiveHash as any) : undefined,
+      query: { enabled: txMode === 'send' && Boolean(effectiveHash) } as any,
+    } as any);
 
-  const isPending = (txMode === 'write' ? isWritePending : isSendPending) || isConfirming;
+  const isPending = txMode === 'calls' ? isCallsPending || isCallsConfirming : isSendPending || isSendConfirming;
   const status: 'idle' | 'pending' | 'success' | 'failed' =
-    (txMode === 'write' ? writeError : sendError)
+    (txMode === 'calls' ? callsError : sendError)
       ? 'failed'
-      : isConfirmed
+      : (txMode === 'calls' ? isCallsConfirmed : isSendConfirmed)
         ? 'success'
         : isPending
           ? 'pending'
@@ -116,7 +131,7 @@ export function DrinksSection() {
 
   const reset = () => {
     resetSend();
-    resetWrite();
+    resetCalls();
     setLocalHash(undefined);
   };
 
@@ -142,13 +157,22 @@ export function DrinksSection() {
 
     const inIframe = typeof window !== 'undefined' && window !== window.top;
     if (inIframe) {
-      setTxMode('write');
-      writeContract({
-        address: DRINKS_ADDRESS,
-        abi: DRINKS_ABI,
-        functionName: 'buyDrink',
-        args: [BigInt(row.id)],
-        value,
+      setTxMode('calls');
+      sendCalls({
+        chainId: 8453,
+        calls: [
+          {
+            to: DRINKS_ADDRESS,
+            data,
+            value,
+          },
+        ],
+        capabilities: {
+          dataSuffix: {
+            value: getBuilderDataSuffix(),
+            optional: true,
+          },
+        },
       });
       return;
     }
@@ -180,7 +204,7 @@ export function DrinksSection() {
 
   // Write drink purchases to live feed.
   useEffect(() => {
-    if (!isConfirmed || !effectiveHash || !address || !lastBought) return;
+    if (status !== 'success' || !effectiveHash || !address || !lastBought) return;
     if (loggedFeedHash.current === effectiveHash) return;
     loggedFeedHash.current = effectiveHash;
     const feedMessage = `Bought ${lastBought.replace(/^[^\w]+\\s*/, '')}`;
@@ -194,7 +218,7 @@ export function DrinksSection() {
       .then(() => {
         // no-op: live feed query polls
       });
-  }, [isConfirmed, effectiveHash, address, lastBought]);
+  }, [status, effectiveHash, address, lastBought]);
 
   return (
     <section className="space-y-4">

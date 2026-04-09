@@ -3,19 +3,20 @@
 import { useMemo, useState } from 'react';
 import {
   useChainId,
+  useSendCalls,
   useSendTransaction,
+  useWaitForCallsStatus,
   useWaitForTransactionReceipt,
-  useWriteContract,
 } from 'wagmi';
 import { encodeFunctionData } from 'viem';
-import { appendBuilderAttributionIfBase } from '@/lib/builderAttribution';
+import { appendBuilderAttributionIfBase, getBuilderDataSuffix } from '@/lib/builderAttribution';
 import { GMWORLD_ABI, GMWORLD_ADDRESS, GMWORLD_FEE_WEI } from '@/lib/contracts';
 
 export type TxStatus = 'idle' | 'pending' | 'success' | 'failed';
 
 export function useGMWorld() {
   const chainId = useChainId();
-  const [txMode, setTxMode] = useState<'send' | 'write'>('send');
+  const [txMode, setTxMode] = useState<'send' | 'calls'>('send');
   const [localHash, setLocalHash] = useState<`0x${string}` | undefined>(undefined);
   const {
     sendTransaction,
@@ -26,29 +27,38 @@ export function useGMWorld() {
     reset: resetSend,
   } = useSendTransaction();
   const {
-    writeContract,
-    data: writeHash,
-    isPending: isWritePending,
-    isSuccess: isWriteSubmitted,
-    error: writeError,
-    reset: resetWrite,
-  } = useWriteContract();
+    sendCalls,
+    data: callsData,
+    isPending: isCallsPending,
+    isSuccess: isCallsSubmitted,
+    error: callsError,
+    reset: resetCalls,
+  } = useSendCalls();
+  const callsId = txMode === 'calls' ? callsData?.id : undefined;
+  const { data: callsStatusData, isLoading: isCallsConfirming, isSuccess: isCallsConfirmed } =
+    useWaitForCallsStatus({
+      id: callsId as any,
+      query: { enabled: Boolean(callsId) },
+    } as any);
 
-  const effectiveHash = (localHash ?? (txMode === 'write' ? writeHash : sendHash)) as
+  const callsTxHash =
+    (callsStatusData as any)?.receipts?.[0]?.transactionHash as `0x${string}` | undefined;
+  const effectiveHash = (localHash ?? (txMode === 'calls' ? callsTxHash : sendHash)) as
     | `0x${string}`
     | undefined;
-  const { isLoading: isConfirming, isSuccess: isConfirmed } =
-    useWaitForTransactionReceipt({ hash: effectiveHash });
+  const { isLoading: isSendConfirming, isSuccess: isSendConfirmed } =
+    useWaitForTransactionReceipt({
+      hash: txMode === 'send' ? (effectiveHash as any) : undefined,
+      query: { enabled: txMode === 'send' && Boolean(effectiveHash) } as any,
+    } as any);
 
-  const basePending = txMode === 'write' ? isWritePending : isSendPending;
-  const baseSubmitted = txMode === 'write' ? isWriteSubmitted : isSendSubmitted;
-  const error = txMode === 'write' ? writeError : sendError;
-  const isPending = basePending || isConfirming;
-  const isSuccess = baseSubmitted && isConfirmed;
+  const isPending = txMode === 'calls' ? isCallsPending || isCallsConfirming : isSendPending || isSendConfirming;
+  const isSuccess = txMode === 'calls' ? isCallsSubmitted && isCallsConfirmed : isSendSubmitted && isSendConfirmed;
+  const error = txMode === 'calls' ? callsError : sendError;
 
   const reset = () => {
     resetSend();
-    resetWrite();
+    resetCalls();
     setLocalHash(undefined);
   };
 
@@ -60,16 +70,25 @@ export function useGMWorld() {
       args: [message],
     });
 
-    // In Farcaster/Base Mini App, use writeContract path (connector-compatible).
+    // In Farcaster/Base Mini App, use wallet_sendCalls path via connector.
     const inIframe = typeof window !== 'undefined' && window !== window.top;
     if (inIframe) {
-      setTxMode('write');
-      return writeContract({
-        address: GMWORLD_ADDRESS,
-        abi: GMWORLD_ABI,
-        functionName: 'sendMessage',
-        args: [message],
-        value: GMWORLD_FEE_WEI,
+      setTxMode('calls');
+      return sendCalls({
+        chainId: 8453,
+        calls: [
+          {
+            to: GMWORLD_ADDRESS,
+            data,
+            value: GMWORLD_FEE_WEI,
+          },
+        ],
+        capabilities: {
+          dataSuffix: {
+            value: getBuilderDataSuffix(),
+            optional: true,
+          },
+        },
       });
     }
 
