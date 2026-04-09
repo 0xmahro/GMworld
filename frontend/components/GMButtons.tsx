@@ -82,7 +82,7 @@ function SingleButton({
           </>
         )}
         {!isPending && !isThisSuccess && (
-          <span className="text-xs text-zinc-500 mt-1">~0.00005 ETH</span>
+          <span className="text-xs text-zinc-500 mt-1">0.00005 ETH</span>
         )}
       </button>
     </div>
@@ -183,7 +183,12 @@ export function GMButtons({ language }: GMButtonsProps) {
               clipRule="evenodd"
             />
           </svg>
-          Transaction failed. Try again or check wallet.
+          <span className="min-w-0">
+            Transaction failed.{' '}
+            <span className="text-red-300/90">
+              {String((error as any)?.shortMessage || (error as any)?.message || '')}
+            </span>
+          </span>
         </div>
       )}
     </div>
