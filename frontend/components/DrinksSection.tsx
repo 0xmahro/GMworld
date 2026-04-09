@@ -186,7 +186,7 @@ export function DrinksSection() {
                 <span>
                   Price:{' '}
                   <span className="text-zinc-300">
-                    0.00003 ETH
+                    0.00005 ETH
                   </span>
                 </span>
                 <span>

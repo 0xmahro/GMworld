@@ -14,8 +14,8 @@ if (!process.env.NEXT_PUBLIC_GMWORLD_ADDRESS) {
 export const GMWORLD_ADDRESS = process.env
   .NEXT_PUBLIC_GMWORLD_ADDRESS as `0x${string}`;
 
-/** Fee in wei: 0.000025 ETH */
-export const GMWORLD_FEE_WEI = 25000000000000n;
+/** Fee in wei: 0.00005 ETH */
+export const GMWORLD_FEE_WEI = 50000000000000n;
 
 export const GMWORLD_ABI = [
   {
@@ -54,8 +54,8 @@ if (!process.env.NEXT_PUBLIC_DRINKS_ADDRESS) {
 export const DRINKS_ADDRESS = process.env
   .NEXT_PUBLIC_DRINKS_ADDRESS as `0x${string}`;
 
-/** Default price in wei: 0.00003 ETH */
-export const DRINK_PRICE_WEI = 30000000000000n;
+/** Default price in wei: 0.00005 ETH */
+export const DRINK_PRICE_WEI = 50000000000000n;
 
 export const DRINKS_ABI = [
   {

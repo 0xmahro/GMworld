@@ -82,7 +82,7 @@ function SingleButton({
           </>
         )}
         {!isPending && !isThisSuccess && (
-          <span className="text-xs text-zinc-500 mt-1">~0.000025 ETH</span>
+          <span className="text-xs text-zinc-500 mt-1">~0.00005 ETH</span>
         )}
       </button>
     </div>
@@ -146,7 +146,7 @@ export function GMButtons({ language }: GMButtonsProps) {
   return (
     <div className="space-y-4">
       <p className="text-sm text-zinc-500 text-center">
-        Network: Base · Confirm in wallet (~0.000025 ETH)
+        Network: Base · Confirm in wallet (~0.00005 ETH)
       </p>
       <div className="flex flex-col sm:flex-row gap-6 justify-center items-start">
         <SingleButton

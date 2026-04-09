@@ -12,7 +12,7 @@ contract GMWorldV2 {
         uint256 timestamp
     );
 
-    uint256 public constant FEE = 0.000025 ether;
+    uint256 public constant FEE = 0.00005 ether;
 
     address public owner;
 
@@ -21,7 +21,7 @@ contract GMWorldV2 {
     }
 
     /**
-     * @notice Send a GM or GN message. Requires FEE (0.000025 ETH) - goes to owner
+     * @notice Send a GM or GN message. Requires FEE (0.00005 ETH) - goes to owner
      * @param message The greeting (e.g., "Good morning", "おはよう")
      */
     function sendMessage(string calldata message) external payable {

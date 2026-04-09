@@ -28,7 +28,7 @@ contract WorldGMDrinks {
     constructor() {
         owner = msg.sender;
 
-        uint256 p = 0.00003 ether;
+        uint256 p = 0.00005 ether;
 
         drinks.push(Drink({name: unicode"☕ Coffee", price: p, totalPurchased: 0}));
         drinks.push(Drink({name: unicode"🍵 Tea", price: p, totalPurchased: 0}));
