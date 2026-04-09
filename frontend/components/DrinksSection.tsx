@@ -12,6 +12,7 @@ import {
 import { encodeFunctionData } from 'viem';
 import { useConnectModal } from '@rainbow-me/rainbowkit';
 import { appendBuilderAttributionIfBase } from '@/lib/builderAttribution';
+import { getMiniAppChainId, getMiniAppWalletClient } from '@/lib/miniappWalletClient';
 import { DRINKS_ABI, DRINKS_ADDRESS, DRINK_PRICE_WEI } from '@/lib/contracts';
 import { supabase } from '@/lib/supabase';
 
@@ -43,6 +44,7 @@ export function DrinksSection() {
 
   const [lastBought, setLastBought] = useState<string | null>(null);
   const loggedFeedHash = useRef<string | null>(null);
+  const [localHash, setLocalHash] = useState<`0x${string}` | undefined>(undefined);
   const isDev = process.env.NODE_ENV === 'development';
   const requiredChainId = isDev ? 31337 : 8453; // Foundry locally, Base in prod
   const isWrongNetwork = chainId !== requiredChainId;
@@ -88,8 +90,9 @@ export function DrinksSection() {
     reset,
   } = useSendTransaction();
 
+  const effectiveHash = (localHash ?? hash) as `0x${string}` | undefined;
   const { isLoading: isConfirming, isSuccess: isConfirmed } =
-    useWaitForTransactionReceipt({ hash });
+    useWaitForTransactionReceipt({ hash: effectiveHash });
 
   const isPending = isSendPending || isConfirming;
   const status: 'idle' | 'pending' | 'success' | 'failed' =
@@ -98,6 +101,7 @@ export function DrinksSection() {
   const buy = async (row: DrinkRow) => {
     setLastBought(null);
     reset();
+    setLocalHash(undefined);
 
     if (!isConnected) {
       openConnectModal?.();
@@ -113,6 +117,24 @@ export function DrinksSection() {
       functionName: 'buyDrink',
       args: [BigInt(row.id)],
     });
+
+    const inIframe = typeof window !== 'undefined' && window !== window.top;
+    if (inIframe) {
+      const wc = await getMiniAppWalletClient();
+      const miniChainId = await getMiniAppChainId();
+      if (wc && miniChainId) {
+        const txHash = (await wc.sendTransaction({
+          // `custom(provider)` has no chain metadata; satisfy viem types.
+          chain: null,
+          to: DRINKS_ADDRESS,
+          data: appendBuilderAttributionIfBase(data, miniChainId),
+          value,
+        })) as `0x${string}`;
+        setLocalHash(txHash);
+        return;
+      }
+    }
+
     sendTransaction({
       to: DRINKS_ADDRESS,
       data: appendBuilderAttributionIfBase(data, chainId),
@@ -139,9 +161,9 @@ export function DrinksSection() {
 
   // Write drink purchases to live feed.
   useEffect(() => {
-    if (!isConfirmed || !hash || !address || !lastBought) return;
-    if (loggedFeedHash.current === hash) return;
-    loggedFeedHash.current = hash;
+    if (!isConfirmed || !effectiveHash || !address || !lastBought) return;
+    if (loggedFeedHash.current === effectiveHash) return;
+    loggedFeedHash.current = effectiveHash;
     const feedMessage = `Bought ${lastBought.replace(/^[^\w]+\\s*/, '')}`;
     supabase
       .from('messages')
@@ -153,7 +175,7 @@ export function DrinksSection() {
       .then(() => {
         // no-op: live feed query polls
       });
-  }, [isConfirmed, hash, address, lastBought]);
+  }, [isConfirmed, effectiveHash, address, lastBought]);
 
   return (
     <section className="space-y-4">
