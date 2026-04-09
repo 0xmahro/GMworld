@@ -54,6 +54,13 @@ if (!process.env.NEXT_PUBLIC_DRINKS_ADDRESS) {
 export const DRINKS_ADDRESS = process.env
   .NEXT_PUBLIC_DRINKS_ADDRESS as `0x${string}`;
 
+/**
+ * Optional legacy drinks contract address.
+ * If set, UI merges totals from legacy + current contract.
+ */
+export const LEGACY_DRINKS_ADDRESS = (process.env.NEXT_PUBLIC_LEGACY_DRINKS_ADDRESS ||
+  '0xfa02DBF5C541418a2FE9D7c1a7e5e02f0c507a9f') as `0x${string}` | undefined;
+
 /** Default price in wei: 0.00005 ETH */
 export const DRINK_PRICE_WEI = 50000000000000n;
 

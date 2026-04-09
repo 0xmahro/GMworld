@@ -17,7 +17,12 @@ import {
   appendBuilderAttributionIfBase,
   getBuilderDataSuffix,
 } from '@/lib/builderAttribution';
-import { DRINKS_ABI, DRINKS_ADDRESS, DRINK_PRICE_WEI } from '@/lib/contracts';
+import {
+  DRINKS_ABI,
+  DRINKS_ADDRESS,
+  DRINK_PRICE_WEI,
+  LEGACY_DRINKS_ADDRESS,
+} from '@/lib/contracts';
 import { supabase } from '@/lib/supabase';
 
 const DRINKS = [
@@ -72,6 +77,26 @@ export function DrinksSection() {
       refetchInterval: 12_000,
     },
   });
+  const legacyContracts = useMemo(
+    () =>
+      LEGACY_DRINKS_ADDRESS
+        ? DRINKS.map((_, i) => ({
+            address: LEGACY_DRINKS_ADDRESS,
+            abi: DRINKS_ABI,
+            chainId: requiredChainId,
+            functionName: 'drinks' as const,
+            args: [BigInt(i)] as const,
+          }))
+        : [],
+    [requiredChainId]
+  );
+  const { data: legacyDrinksData, refetch: refetchLegacyDrinks } = useReadContracts({
+    contracts: legacyContracts as any,
+    query: {
+      enabled: legacyContracts.length > 0,
+      refetchInterval: 12_000,
+    },
+  });
 
   const rows: DrinkRow[] = useMemo(() => {
     return DRINKS.map((d, i) => {
@@ -82,10 +107,12 @@ export function DrinksSection() {
         id: i,
         display: `${d.emoji} ${d.label}`,
         priceWei: r?.priceWei,
-        totalPurchased: r?.totalPurchased,
+        totalPurchased:
+          (r?.totalPurchased ?? 0n) +
+          (decodeDrinkResult(legacyDrinksData?.[i]?.result as unknown)?.totalPurchased ?? 0n),
       };
     });
-  }, [drinksData]);
+  }, [drinksData, legacyDrinksData]);
 
   const {
     sendTransaction,
@@ -194,13 +221,18 @@ export function DrinksSection() {
   useEffect(() => {
     if (status !== 'success') return;
     refetchDrinks();
+    refetchLegacyDrinks();
     const t1 = setTimeout(refetchDrinks, 800);
+    const t1b = setTimeout(refetchLegacyDrinks, 800);
     const t2 = setTimeout(refetchDrinks, 2500);
+    const t2b = setTimeout(refetchLegacyDrinks, 2500);
     return () => {
       clearTimeout(t1);
+      clearTimeout(t1b);
       clearTimeout(t2);
+      clearTimeout(t2b);
     };
-  }, [status, refetchDrinks]);
+  }, [status, refetchDrinks, refetchLegacyDrinks]);
 
   // Write drink purchases to live feed.
   useEffect(() => {
