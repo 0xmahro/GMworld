@@ -8,7 +8,7 @@ import {
 } from 'wagmi';
 import { encodeFunctionData } from 'viem';
 import { appendBuilderAttributionIfBase } from '@/lib/builderAttribution';
-import { getMiniAppChainId, getMiniAppWalletClient } from '@/lib/miniappWalletClient';
+import { getMiniAppChainId, miniAppSendCall } from '@/lib/miniappWalletClient';
 import { GMWORLD_ABI, GMWORLD_ADDRESS, GMWORLD_FEE_WEI } from '@/lib/contracts';
 
 export type TxStatus = 'idle' | 'pending' | 'success' | 'failed';
@@ -46,16 +46,14 @@ export function useGMWorld() {
     // Use host EIP-1193 provider directly.
     const inIframe = typeof window !== 'undefined' && window !== window.top;
     if (inIframe) {
-      const wc = await getMiniAppWalletClient();
       const miniChainId = await getMiniAppChainId();
-      if (wc && miniChainId) {
-        const txHash = (await wc.sendTransaction({
-          // `custom(provider)` has no chain metadata; satisfy viem types.
-          chain: null,
+      if (miniChainId) {
+        const txHash = await miniAppSendCall({
           to: GMWORLD_ADDRESS,
           data: appendBuilderAttributionIfBase(data, miniChainId),
           value: GMWORLD_FEE_WEI,
-        })) as `0x${string}`;
+          chainId: miniChainId,
+        });
         setLocalHash(txHash);
         return txHash;
       }

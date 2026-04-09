@@ -12,7 +12,7 @@ import {
 import { encodeFunctionData } from 'viem';
 import { useConnectModal } from '@rainbow-me/rainbowkit';
 import { appendBuilderAttributionIfBase } from '@/lib/builderAttribution';
-import { getMiniAppChainId, getMiniAppWalletClient } from '@/lib/miniappWalletClient';
+import { getMiniAppChainId, miniAppSendCall } from '@/lib/miniappWalletClient';
 import { DRINKS_ABI, DRINKS_ADDRESS, DRINK_PRICE_WEI } from '@/lib/contracts';
 import { supabase } from '@/lib/supabase';
 
@@ -120,16 +120,14 @@ export function DrinksSection() {
 
     const inIframe = typeof window !== 'undefined' && window !== window.top;
     if (inIframe) {
-      const wc = await getMiniAppWalletClient();
       const miniChainId = await getMiniAppChainId();
-      if (wc && miniChainId) {
-        const txHash = (await wc.sendTransaction({
-          // `custom(provider)` has no chain metadata; satisfy viem types.
-          chain: null,
+      if (miniChainId) {
+        const txHash = await miniAppSendCall({
           to: DRINKS_ADDRESS,
           data: appendBuilderAttributionIfBase(data, miniChainId),
           value,
-        })) as `0x${string}`;
+          chainId: miniChainId,
+        });
         setLocalHash(txHash);
         return;
       }
